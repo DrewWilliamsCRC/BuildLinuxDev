@@ -1,0 +1,8 @@
+{
+    "ignore": ["docker-compose-demo/api/**"],
+    "reportMissingImports": false,
+    "reportMissingModuleSource": false,
+    "reportGeneralTypeIssues": false,
+    "useLibraryCodeForTypes": false,
+    "typeCheckingMode": "off"
+} 
