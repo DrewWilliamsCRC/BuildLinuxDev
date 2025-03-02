@@ -16,7 +16,8 @@ inventory/group_vars/*.yml
 inventory/host_vars/*.yml
 
 # IDE files
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.sublime-*
 *.swp
