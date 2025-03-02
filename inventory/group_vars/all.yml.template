@@ -1,0 +1,13 @@
+---
+# Connection and Authentication
+ansible_host: "{{ lookup('env', 'SERVER_IP') }}"
+ansible_user: "{{ lookup('env', 'SSH_USERNAME') }}"
+ansible_password: "{{ lookup('env', 'SSH_PASSWORD') }}"
+ansible_become: yes
+ansible_become_method: sudo
+ansible_become_pass: "{{ lookup('env', 'ANSIBLE_SUDO_PASS') }}"
+
+# Additional Variables
+server_ip: "{{ lookup('env', 'SERVER_IP') }}"
+ssh_username: "{{ lookup('env', 'SSH_USERNAME') }}"
+ssh_password: "{{ lookup('env', 'SSH_PASSWORD') }}" 

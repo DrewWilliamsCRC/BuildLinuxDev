@@ -1,0 +1,25 @@
+---
+# SSH Configuration
+ssh_username: "{{ lookup('env', 'SSH_USERNAME') }}"
+ssh_key_path: "~/.ssh/id_rsa"
+
+# Workspace Configuration
+workspace_dir: "/opt/dev-environment"
+
+# Docker Images
+python_base_image: "python:3.11-slim"
+postgres_image: "postgres:15-alpine"
+redis_image: "redis:7-alpine"
+
+# Application Configuration
+app_port: 5000
+postgres_port: 5432
+redis_port: 6379
+
+# Database Configuration
+postgres_user: "{{ lookup('env', 'POSTGRES_USER') }}"
+postgres_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+postgres_db: "{{ lookup('env', 'POSTGRES_DB') }}"
+
+# Redis Configuration
+redis_password: ""  # Empty for no password 

@@ -1,0 +1,45 @@
+---
+- name: Debug connection variables
+  raw: echo "Connected successfully to {{ inventory_hostname }} as {{ ansible_user }}"
+  register: debug_connection
+  changed_when: false
+  check_mode: no
+      
+- name: Display connection debug
+  debug:
+    msg: "{{ debug_connection.stdout_lines | default([]) }}"
+      
+- name: Check SSH authentication method
+  raw: echo "SSH authentication successful"
+  register: ssh_auth_check
+  changed_when: false
+  check_mode: no
+      
+- name: Display SSH authentication result
+  debug:
+    msg: "{{ ssh_auth_check.stdout_lines | default([]) }}"
+      
+- name: Check if Python 3 is installed
+  raw: command -v python3 || echo "Python 3 not found"
+  register: python3_check
+  changed_when: false
+  check_mode: no
+      
+- name: Check if sudo requires -H flag
+  raw: sudo -H echo "test" || echo "No -H needed"
+  register: sudo_h_check
+  changed_when: false
+  ignore_errors: true
+  check_mode: no
+      
+- name: Install Python 3 if not present
+  raw: >
+    {% if sudo_h_check.stdout is defined and 'No -H needed' in sudo_h_check.stdout %}sudo{% else %}sudo -H{% endif %} apt-get update -qq &&
+    {% if sudo_h_check.stdout is defined and 'No -H needed' in sudo_h_check.stdout %}sudo{% else %}sudo -H{% endif %} apt-get install -y python3 python3-pip python3-apt
+  when: python3_check.stdout is defined and 'not found' in python3_check.stdout
+  check_mode: no
+      
+- name: Wait for Python 3 to be available
+  raw: until command -v python3; do sleep 2; done
+  when: python3_check.stdout is defined and 'not found' in python3_check.stdout
+  check_mode: no

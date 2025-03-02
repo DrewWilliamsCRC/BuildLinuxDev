@@ -1,0 +1,80 @@
+---
+- name: Remove all Docker-related source files (cleanup)
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/apt/sources.list.d/docker.list
+    - /etc/apt/keyrings/docker.gpg
+    - /etc/apt/keyrings/docker.asc
+
+- name: Update apt cache after cleanup
+  apt:
+    update_cache: yes
+
+- name: Remove existing Docker packages
+  apt:
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+
+- name: Download Docker installation script
+  get_url:
+    url: https://get.docker.com
+    dest: /tmp/get-docker.sh
+    mode: '0755'
+
+- name: Run Docker installation script
+  shell: /tmp/get-docker.sh
+  register: docker_install
+  changed_when: "'Installation successful' in docker_install.stdout"
+
+- name: Add user to docker group
+  user:
+    name: "{{ ssh_username }}"
+    groups: docker
+    append: yes
+
+- name: Restart Docker service
+  systemd:
+    name: docker
+    state: restarted
+    daemon_reload: yes
+
+- name: Ensure Docker socket has correct permissions
+  file:
+    path: /var/run/docker.sock
+    mode: '0666'
+
+- name: Force reconnection to apply group membership
+  meta: reset_connection
+
+- name: Wait for Docker to be available
+  wait_for:
+    path: /var/run/docker.sock
+    state: present
+    timeout: 30
+
+- name: Check Docker socket permissions
+  shell: ls -l /var/run/docker.sock
+  register: docker_socket_perms
+  changed_when: false
+
+- name: Display Docker socket permissions
+  debug:
+    var: docker_socket_perms.stdout_lines
+
+- name: Fix Docker socket permissions if needed
+  file:
+    path: /var/run/docker.sock
+    mode: '0666'
+  when: "'srw-rw-rw-' not in docker_socket_perms.stdout"
+
+- name: Install Docker Compose plugin
+  apt:
+    name: docker-compose-plugin
+    state: present

@@ -1,0 +1,12 @@
+[defaults]
+inventory = inventory/hosts.ini
+remote_user = your_username
+host_key_checking = False
+roles_path = roles
+interpreter_python = auto_silent
+
+[privilege_escalation]
+become = True
+become_method = sudo
+become_user = root
+become_ask_pass = False 

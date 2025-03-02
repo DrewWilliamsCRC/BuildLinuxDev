@@ -1,0 +1,22 @@
+---
+- name: Ensure Python 3 is installed
+  hosts: dev_server
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Debug connection variables
+      raw: echo "Connected successfully to {{ inventory_hostname }} as {{ ansible_user }}"
+      register: debug_connection
+      changed_when: false
+      check_mode: no
+
+- name: Configure Development Environment
+  hosts: dev_server
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600

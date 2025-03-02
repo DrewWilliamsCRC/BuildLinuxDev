@@ -1,0 +1,9 @@
+---
+- name: Include Python setup tasks
+  import_tasks: python.yml
+
+- name: Include Docker setup tasks
+  import_tasks: docker.yml
+
+- name: Include application setup tasks
+  import_tasks: application.yml

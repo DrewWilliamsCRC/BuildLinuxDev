@@ -1,0 +1,34 @@
+---
+- name: Check if SSH key exists
+  stat:
+    path: "{{ ssh_key_path }}"
+  register: ssh_key
+  delegate_to: localhost
+
+- name: Generate SSH key if it doesn't exist
+  command: ssh-keygen -t rsa -b 4096 -f {{ ssh_key_path }} -N ""
+  delegate_to: localhost
+  when: not ssh_key.stat.exists
+
+- name: Ensure .ssh directory exists
+  file:
+    path: ~/.ssh
+    state: directory
+    mode: '0700'
+
+- name: Add SSH key to authorized_keys
+  authorized_key:
+    user: "{{ ssh_username }}"
+    state: present
+    key: "{{ lookup('file', ssh_key_path + '.pub') }}"
+  when: ssh_key.stat.exists
+
+- name: Test SSH key authentication
+  shell: "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -i {{ ssh_key_path }} {{ ssh_username }}@localhost echo 'SSH key auth successful'"
+  register: ssh_test
+  changed_when: false
+  delegate_to: localhost
+
+- name: Display SSH test result
+  debug:
+    var: ssh_test.stdout 

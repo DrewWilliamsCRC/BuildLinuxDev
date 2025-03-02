@@ -1,0 +1,50 @@
+# Environment variables
+.env
+*.env
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Ansible
+*.retry
+ansible.cfg
+inventory/*.ini
+inventory/group_vars/*.yml
+inventory/host_vars/*.yml
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+
+# Generated files
+/playbooks/*.yml
+/roles/*/vars/*.yml
+
+# Logs
+*.log
+logs/
+
+# Docker volumes
+docker-compose-demo/volumes/
+**/volumes/
+*.rdb
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.priv 

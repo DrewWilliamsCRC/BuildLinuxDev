@@ -1,0 +1,29 @@
+---
+- name: Install Python development packages
+  apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+      - python3-dev
+    state: present
+
+- name: Install Python build dependencies
+  apt:
+    name:
+      - python3-full
+      - python3-venv
+      - python3-pip
+      - pipx
+    state: present
+
+- name: Install Python dependencies for Flask app
+  pip:
+    name:
+      - flask
+      - flask-cors
+      - psycopg2-binary
+      - redis
+    state: present
+    virtualenv: "{{ workspace_dir }}/venv"
+    virtualenv_command: python3 -m venv

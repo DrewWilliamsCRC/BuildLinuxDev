@@ -1,0 +1,116 @@
+---
+- name: Install common packages
+  apt:
+    name:
+      - build-essential
+      - git
+      - curl
+      - wget
+      - htop
+      - tmux
+      - vim
+      - unzip
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+      - lsb-release
+    state: present
+
+- name: Create workspace directory
+  file:
+    path: "{{ workspace_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Create app directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+  with_items:
+    - "{{ workspace_dir }}/api"
+    - "{{ workspace_dir }}/frontend"
+
+- name: Copy Flask application files
+  copy:
+    src: "{{ playbook_dir }}/../{{ item.src }}"
+    dest: "{{ workspace_dir }}/{{ item.dest }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+  with_items:
+    - { src: 'docker-compose-demo/api/app.py', dest: 'api/app.py' }
+    - { src: 'docker-compose-demo/api/requirements.txt', dest: 'api/requirements.txt' }
+    - { src: 'docker-compose-demo/docker-compose.yml', dest: 'docker-compose.yml' }
+
+- name: Create Dockerfile for API
+  copy:
+    dest: "{{ workspace_dir }}/api/Dockerfile"
+    content: |
+      FROM {{ python_base_image }}
+      
+      WORKDIR /app
+      
+      RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+      
+      COPY requirements.txt .
+      RUN pip install --no-cache-dir -r requirements.txt
+      
+      COPY . .
+      
+      CMD ["python", "app.py"]
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Create database schema
+  copy:
+    dest: "{{ workspace_dir }}/api/init.sql"
+    content: |
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        status VARCHAR(50) DEFAULT 'pending'
+      );
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Build and start Docker containers
+  community.docker.docker_compose_v2:
+    project_src: "{{ workspace_dir }}"
+    build: always
+    state: present
+
+- name: Wait for containers to be healthy
+  shell: docker ps --format '{% raw %}{{.Names}} - {{.Status}}{% endraw %}'
+  register: container_status
+  until: >
+    'healthy' in container_status.stdout and
+    container_status.stdout.count('healthy') >= 3
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Display container health status
+  debug:
+    msg: "{{ container_status.stdout_lines }}"
+
+- name: Verify API health endpoint
+  uri:
+    url: "http://localhost:5000/health"
+    return_content: yes
+  register: health_check
+  retries: 3
+  delay: 5
+  until: health_check.status == 200
+
+- name: Display API health check result
+  debug:
+    var: health_check.json
